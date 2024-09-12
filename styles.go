@@ -1376,22 +1376,33 @@ var (
 	}
 )
 
+// colorChoice returns a hex color code from the actual color values.
+func (clr *decodeCTColor) colorChoice() *string {
+	if clr.SrgbClr != nil {
+		return clr.SrgbClr.Val
+	}
+	if clr.SysClr != nil {
+		return &clr.SysClr.LastClr
+	}
+	return nil
+}
+
 // GetBaseColor returns the preferred hex color code by giving hex color code,
 // indexed color, and theme color.
 func (f *File) GetBaseColor(hexColor string, indexedColor int, themeColor *int) string {
 	if f.Theme != nil && themeColor != nil {
 		clrScheme := f.Theme.ThemeElements.ClrScheme
 		if val, ok := map[int]*string{
-			0: &clrScheme.Lt1.SysClr.LastClr,
-			1: &clrScheme.Dk1.SysClr.LastClr,
-			2: clrScheme.Lt2.SrgbClr.Val,
-			3: clrScheme.Dk2.SrgbClr.Val,
-			4: clrScheme.Accent1.SrgbClr.Val,
-			5: clrScheme.Accent2.SrgbClr.Val,
-			6: clrScheme.Accent3.SrgbClr.Val,
-			7: clrScheme.Accent4.SrgbClr.Val,
-			8: clrScheme.Accent5.SrgbClr.Val,
-			9: clrScheme.Accent6.SrgbClr.Val,
+			0: clrScheme.Lt1.colorChoice(),
+			1: clrScheme.Dk1.colorChoice(),
+			2: clrScheme.Lt2.colorChoice(),
+			3: clrScheme.Dk2.colorChoice(),
+			4: clrScheme.Accent1.colorChoice(),
+			5: clrScheme.Accent2.colorChoice(),
+			6: clrScheme.Accent3.colorChoice(),
+			7: clrScheme.Accent4.colorChoice(),
+			8: clrScheme.Accent5.colorChoice(),
+			9: clrScheme.Accent6.colorChoice(),
 		}[*themeColor]; ok && val != nil {
 			return *val
 		}
@@ -1891,27 +1902,25 @@ func (f *File) newFont(style *Style) (*xlsxFont, error) {
 
 // getNumFmtID provides a function to get number format code ID.
 // If given number format code does not exist, will return -1.
-func getNumFmtID(styleSheet *xlsxStyleSheet, style *Style) (numFmtID int) {
-	numFmtID = -1
+func getNumFmtID(styleSheet *xlsxStyleSheet, style *Style) int {
+	numFmtID := -1
 	if _, ok := builtInNumFmt[style.NumFmt]; ok {
 		return style.NumFmt
 	}
 	if (27 <= style.NumFmt && style.NumFmt <= 36) || (50 <= style.NumFmt && style.NumFmt <= 81) {
-		numFmtID = style.NumFmt
-		return
+		return style.NumFmt
 	}
 	if fmtCode, ok := currencyNumFmt[style.NumFmt]; ok {
 		numFmtID = style.NumFmt
 		if styleSheet.NumFmts != nil {
 			for _, numFmt := range styleSheet.NumFmts.NumFmt {
 				if numFmt.FormatCode == fmtCode {
-					numFmtID = numFmt.NumFmtID
-					return
+					return numFmt.NumFmtID
 				}
 			}
 		}
 	}
-	return
+	return numFmtID
 }
 
 // newNumFmt provides a function to check if number format code in the range
