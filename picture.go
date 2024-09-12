@@ -731,12 +731,22 @@ func (f *File) drawingResize(sheet, cell string, width, height float64, opts *Gr
 			cellHeight += f.getRowHeight(sheet, row)
 		}
 	}
-	asp := float64(cellWidth) / width
-	width, height = float64(cellWidth), height*asp
-	asp = float64(cellHeight) / height
-	height, width = float64(cellHeight), width*asp
-	asp = float64(cellWidth) / width
-	width, height = float64(cellWidth), height*asp
+	if float64(cellWidth) < width {
+		asp := float64(cellWidth) / width
+		width, height = float64(cellWidth), height*asp
+	}
+	if float64(cellHeight) < height {
+		asp := float64(cellHeight) / height
+		height, width = float64(cellHeight), width*asp
+	}
+	if float64(cellHeight) > height && float64(cellWidth) > width {
+		asp := float64(cellWidth) / width
+		width, height = float64(cellWidth), height*asp
+		if float64(cellHeight) < height {
+			asp = float64(cellHeight) / height
+			height, width = float64(cellHeight), width*asp
+		}
+	}
 	if opts.AutoFitIgnoreAspect {
 		width, height = float64(cellWidth), float64(cellHeight)
 	}
